@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reef Rescue: Advanced Eco-Submersible</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: #030a16;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow: hidden; 
+            color: #ffffff;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .ui-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(3, 13, 32, 0.98); 
+            text-align: center;
+            z-index: 10;
+            padding: 20px;
+        }
+
+        .hidden { display: none !important; }
+
+        h1 {
+            font-size: 4.5vw;
+            font-weight: 800;
+            color: #00f0ff;
+            text-transform: uppercase;
+            text-shadow: 0 0 25px rgba(0, 240, 255, 0.4);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: #00e676;
+            margin-bottom: 15px;
+        }
+
+        .content-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(0, 240, 255, 0.2);
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 650px;
+            width: 100%;
+            margin-bottom: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+        }
+
+        .content-box p {
+            font-size: 1.15rem;
+            line-height: 1.7;
+            color: #b0bec5;
+            margin-bottom: 15px;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .game-btn {
+            background: #00b0ff;
+            color: white;
+            border: none;
+            padding: 16px 45px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 20px rgba(0, 176, 255, 0.4);
+        }
+
+        .game-btn:hover {
+            background: #00f0ff;
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.6);
+        }
+
+        .alt-btn {
+            background: #37474f;
+            box-shadow: 0 0 15px rgba(55, 71, 79, 0.4);
+        }
+        .alt-btn:hover {
+            background: #4f5b66;
+            box-shadow: 0 0 25px rgba(79, 91, 102, 0.6);
+        }
+
+        #game-hud {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            pointer-events: none;
+            z-index: 5;
+            background: rgba(2, 10, 25, 0.9);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 5px solid #00f0ff;
+            font-size: 1.15rem;
+            line-height: 1.8;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        .key-binds {
+            display: inline-block;
+            background: #37474f;
+            color: #fff;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+            border-bottom: 3px solid #263238;
+        }
+
+        #achievement-popup {
+            position: absolute;
+            bottom: -150px;
+            right: 30px;
+            background: linear-gradient(135deg, #001233 0%, #002266 100%);
+            border: 2px solid #00e676;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 380px;
+            box-shadow: 0 10px 30px rgba(0,230,118,0.3);
+            z-index: 100;
+            transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #achievement-popup.active { bottom: 30px; }
+        .ach-icon { font-size: 2.5rem; }
+        .ach-text h4 { color: #00e676; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 1px; }
+        .ach-text p { color: #b0bec5; font-size: 0.95rem; }
+
+        .glossary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            max-width: 800px;
+            width: 100%;
+            margin-bottom: 25px;
+        }
+        .glossary-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(0,240,255,0.1);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: left;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .glossary-card.locked { opacity: 0.4; filter: grayscale(1); }
+        .g-avatar { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .g-info h4 { color: #00f0ff; margin-bottom: 5px; }
+        .g-info p { color: #b0bec5; font-size: 0.85rem; line-height: 1.4; }
+
+        .ach-mini-list {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .ach-badge {
+            background: rgba(0,0,0,0.4);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #666;
+        }
+        .ach-badge.unlocked {
+            border-color: #ffd700;
+            color: #ffd700;
+            background: rgba(255,215,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="screen-main-menu" class="ui-screen">
+        <h1>Reef Rescue</h1>
+        <div class="content-box">
+            <p>Our global oceans are under heavy duress. Ghost fishing nets trap defenseless marine life, and synthetic plastics contaminate precious coral habitats.</p>
+            <p>As an eco-submersible pilot, your mission is to locate underwater waste zones, clean up human debris, and restore ecological balance.</p>
+        </div>
+        <div class="btn-container">
+            <button class="game-btn" onclick="showTutorial()">Begin Operation</button>
+            <button class="game-btn alt-btn" onclick="showGlossary()">Data Glossary</button>
+        </div>
+    </div>
+
+    <div id="screen-tutorial" class="ui-screen hidden">
+        <h2>Submersible Pilot Briefing</h2>
+        <div class="content-box">
+            <p><strong>Navigation:</strong> Use <span class="key-binds">W A S D</span> or <span class="key-binds">Arrow Keys</span> to pilot your sub.</p>
+            <p><strong>Debris Extraction:</strong> Intercept floating white plastics to remove them from the ecosystem.</p>
+            <p><strong>Wildlife Rescue:</strong> Locate marine animals trapped in red commercial netting and touch them to break them free.</p>
+            <p><strong>Hazard Warning:</strong> Avoid industrial red toxic mines. Striking them damages your hull structure.</p>
+        </div>
+        <button class="game-btn" onclick="pressStartGame()">Dive into Deep Ocean</button>
+    </div>
+
+    <div id="screen-glossary" class="ui-screen hidden">
+        <h2>Marine Life & Achievement Log</h2>
+        
+        <div class="glossary-grid" id="glossary-render-target"></div>
+
+        <h3>Global Achievements</h3>
+        <div class="ach-mini-list" id="ach-badge-target"></div>
+        <br><br>
+        <button class="game-btn alt-btn" onclick="hideGlossary()">Return to Menu</button>
+    </div>
+
+    <div id="screen-end" class="ui-screen hidden">
+        <h1 id="end-title">Mission Evaluation</h1>
+        <div class="content-box" id="end-statistics"></div>
+        <button class="game-btn" onclick="pressStartGame()">Deploy Next Mission</button>
+    </div>
+
+    <div id="game-hud" class="hidden">
+        <div>Reef Health Index: <span id="hud-reef-health" style="color:#00e676; font-weight:bold;">0</span></div>
+        <div>Plastic Collected: <span id="hud-trash-count">0 / 0</span></div>
+        <div>Sub Hull Integrity: <span id="hud-hull-health" style="color:#00e676; font-weight:bold;">100%</span></div>
+    </div>
+
+    <div id="achievement-popup">
+        <div class="ach-icon">🏆</div>
+        <div class="ach-text">
+            <h4>Achievement Unlocked!</h4>
+            <p id="ach-popup-desc">First Dive Record registered.</p>
+        </div>
+    </div>
+
+<script>
+    // ==========================================
+    // 1. ENGINE INITIALIZATION & DELTA CLOCK
+    // ==========================================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let displayWidth, displayHeight;
+    function adjustScreenDimensions() {
+        displayWidth = window.innerWidth;
+        displayHeight = window.innerHeight;
+        canvas.width = displayWidth;
+        canvas.height = displayHeight;
+    }
+    window.addEventListener('resize', adjustScreenDimensions);
+    adjustScreenDimensions(); 
+
+    // Delta Time tracking variables
+    let lastTime = performance.now();
+    let dt = 0; 
+
+    const menuScreen = document.getElementById('screen-main-menu');
+    const tutorialScreen = document.getElementById('screen-tutorial');
+    const glossaryScreen = document.getElementById('screen-glossary');
+    const endScreen = document.getElementById('screen-end');
+    const liveHUD = document.getElementById('game-hud');
+
+    // ==========================================
+    // 2. DATA STORAGE (GLOSSARY & ACHIEVEMENTS)
+    // ==========================================
+    const marineSpeciesDatabase = {
+        turtle: { name: "Sea Turtle", icon: "🐢", color: "#2e7d32", fact: "Over 52% of world sea turtles have consumed plastic waste, mistaking floating bags for jellyfish.", unlocked: false },
+        mantaray: { name: "Manta Ray", icon: "🐟", color: "#006064", fact: "Manta rays filter-feed down microplastics, blocking their digestive track and bringing harmful chemicals into the food web.", unlocked: false },
+        dolphin: { name: "Coastal Dolphin", icon: "🐬", color: "#1565c0", fact: "Discarded ghost fishing line wraps around fins, completely stopping their movement and ability to reach air layers to breathe.", unlocked: false },
+        whale: { name: "Blue Whale", icon: "🐋", color: "#0d47a1", fact: "A single deep-diving blue whale swallows up to 10 million microplastic particles every single day via heavy filter foraging.", unlocked: false }
+    };
+
+    const globalAchievementsDatabase = {
+        firstDive: { title: "First Dive", desc: "Initiated an underwater cleanup scan.", unlocked: false },
+        janitor: { title: "Janitor of the Deep", desc: "Extracted 100% of plastic trash in a mission.", unlocked: false },
+        liberator: { title: "Fauna Liberator", desc: "Successfully cut free all trapped reef wildlife.", unlocked: false },
+        deity: { title: "Ocean Deity", desc: "Restored a zone without taking damage from industrial mines.", unlocked: false }
+    };
+
+    function loadSavedData() {
+        try {
+            const savedSpecs = localStorage.getItem('reef_rescue_species');
+            const savedAchs = localStorage.getItem('reef_rescue_achievements');
+            
+            if (savedSpecs) {
+                const parsed = JSON.parse(savedSpecs);
+                Object.keys(parsed).forEach(k => { if(marineSpeciesDatabase[k]) marineSpeciesDatabase[k].unlocked = parsed[k]; });
+            }
+            if (savedAchs) {
+                const parsed = JSON.parse(savedAchs);
+                Object.keys(parsed).forEach(k => { if(globalAchievementsDatabase[k]) globalAchievementsDatabase[k].unlocked = parsed[k]; });
+            }
+        } catch(e) { console.log("Local storage fallback active."); }
+    }
+
+    function saveCurrentDataToBrowser() {
+        try {
+            const specsState = {};
+            Object.keys(marineSpeciesDatabase).forEach(k => specsState[k] = marineSpeciesDatabase[k].unlocked);
+            const achsState = {};
+            Object.keys(globalAchievementsDatabase).forEach(k => achsState[k] = globalAchievementsDatabase[k].unlocked);
+
+            localStorage.setItem('reef_rescue_species', JSON.stringify(specsState));
+            localStorage.setItem('reef_rescue_achievements', JSON.stringify(achsState));
+        } catch(e) {}
+    }
+
+    function triggerAchievementUnlock(key) {
+        if (globalAchievementsDatabase[key] && !globalAchievementsDatabase[key].unlocked) {
+            globalAchievementsDatabase[key].unlocked = true;
+            saveCurrentDataToBrowser();
+            
+            playAchievementChime();
+
+            const pop = document.getElementById('achievement-popup');
+            document.getElementById('ach-popup-desc').innerText = globalAchievementsDatabase[key].title + ": " + globalAchievementsDatabase[key].desc;
+            pop.classList.add('active');
+            
+            setTimeout(() => { pop.classList.remove('active'); }, 4000);
+        }
+    }
+
+    loadSavedData();
+
+    // ==========================================
+    // 3. SYNTHESIZED SOUND EFFECTS ENGINE
+    // ==========================================
+    let audioCtx = null;
+
+    function initAudioEngine() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    function playCollectSound() {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); 
+        osc.frequency.exponentialRampToValueAtTime(1174.66, audioCtx.currentTime + 0.08); 
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+    }
+
+    function playRescueSound() {
+        if (!audioCtx) return;
+        let now = audioCtx.currentTime;
+        let osc1 = audioCtx.createOscillator(); let gain1 = audioCtx.createGain();
+        osc1.connect(gain1); gain1.connect(audioCtx.destination);
+        osc1.type = 'triangle'; osc1.frequency.setValueAtTime(659.25, now);
+        gain1.gain.setValueAtTime(0.2, now); gain1.gain.linearRampToValueAtTime(0, now + 0.1);
+        osc1.start(now); osc1.stop(now + 0.1);
+
+        let osc2 = audioCtx.createOscillator(); let gain2 = audioCtx.createGain();
+        osc2.connect(gain2); gain2.connect(audioCtx.destination);
+        osc2.type = 'triangle'; osc2.frequency.setValueAtTime(880.00, now + 0.08);
+        gain2.gain.setValueAtTime(0.2, now + 0.08); gain2.gain.linearRampToValueAtTime(0, now + 0.25);
+        osc2.start(now + 0.08); osc2.stop(now + 0.25);
+    }
+
+    function playHazardSound() {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.2); 
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+    }
+
+    function playVictorySound() {
+        if (!audioCtx) return;
+        let now = audioCtx.currentTime;
+        let notes = [523.25, 659.25, 783.99, 1046.50]; 
+        notes.forEach((freq, idx) => {
+            let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            ctx.type = 'sine'; osc.frequency.setValueAtTime(freq, now + (idx * 0.1));
+            gain.gain.setValueAtTime(0.15, now + (idx * 0.1));
+            gain.gain.linearRampToValueAtTime(0, now + (idx * 0.1) + 0.3);
+            osc.start(now + (idx * 0.1)); osc.stop(now + (idx * 0.1) + 0.3);
+        });
+    }
+
+    function playDefeatSound() {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(90, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+    }
+
+    function playAchievementChime() {
+        if (!audioCtx) return;
+        let now = audioCtx.currentTime;
+        let melody = [523.25, 587.33, 659.25, 698.46, 783.99]; 
+        melody.forEach((freq, idx) => {
+            let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(freq, now + (idx * 0.05));
+            gain.gain.setValueAtTime(0.1, now + (idx * 0.05));
+            gain.gain.linearRampToValueAtTime(0, now + (idx * 0.05) + 0.2);
+            osc.start(now + (idx * 0.05)); osc.stop(now + (idx * 0.05) + 0.2);
+        });
+    }
+
+    // ==========================================
+    // 4. GAME RUNTIME VARIABLES
+    // ==========================================
+    let isGameRunning = false;
+    let worldCameraX = 0;
+    const totalLevelWidth = 6000; 
+
+    let reefHealthIndex = 0;
+    let submarineHull = 100;
+    let collectedTrashAmount = 0;
+    let targetTrashRequirement = 15;
+    let rescuedAnimalsCounter = 0;
+    let sufferedMineHits = false; 
+
+    let arrayTrash = [];
+    let arrayAnimals = [];
+    let arrayHazards = [];
+    let arrayParticles = [];
+    let arrayFloatyText = [];
+    let arraySceneryFlora = [];
+
+    const inputKeys = {};
+    window.addEventListener('keydown', e => inputKeys[e.key.toLowerCase()] = true);
+    window.addEventListener('keyup', e => inputKeys[e.key.toLowerCase()] = false);
+
+    // ==========================================
+    // 5. PLAYER SUBMERSIBLE OBJECT
+    // ==========================================
+    const ecoSubmersible = {
+        x: 200,
+        y: displayHeight / 2,
+        engineSpeed: 480, // Pixels per second (480px / 60 frames = 8px baseline)
+
+        updateMovement(modifier) {
+            if (inputKeys['w'] || inputKeys['arrowup']) this.y -= this.engineSpeed * modifier;
+            if (inputKeys['s'] || inputKeys['arrowdown']) this.y += this.engineSpeed * modifier;
+            if (inputKeys['a'] || inputKeys['arrowleft']) this.x -= this.engineSpeed * modifier;
+            if (inputKeys['d'] || inputKeys['arrowright']) this.x += this.engineSpeed * modifier;
+
+            if (this.y < 60) this.y = 60;
+            if (this.y > displayHeight - 70) this.y = displayHeight - 70;
+            if (this.x < 60) this.x = 60;
+            if (this.x > totalLevelWidth - 150) this.x = totalLevelWidth - 150;
+
+            let desiredCameraPos = this.x - (displayWidth / 3);
+            // Camera smoothing adjusted to factor in delta time
+            worldCameraX += (desiredCameraPos - worldCameraX) * (4.8 * modifier); 
+            
+            if (worldCameraX < 0) worldCameraX = 0;
+            if (worldCameraX > totalLevelWidth - displayWidth) worldCameraX = totalLevelWidth - displayWidth;
+
+            if (Math.random() < 21 * modifier) {
+                arrayParticles.push(generateCustomParticle(this.x - 45, this.y + 8, 'rgba(224, 247, 250, 0.6)', true));
+            }
+        },
+
+        renderSprite() {
+            ctx.save();
+            ctx.translate(this.x - worldCameraX, this.y);
+            ctx.fillStyle = '#00e5ff'; 
+            ctx.beginPath(); ctx.ellipse(0, 0, 40, 22, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.arc(22, -4, 12, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#00b0ff'; ctx.fillRect(-10, -28, 16, 8);
+            ctx.fillStyle = '#37474f'; ctx.fillRect(-48, -8, 10, 16);
+            ctx.restore();
+        }
+    };
+
+    // ==========================================
+    // 6. ENGINE FUNCTIONS & GENERATORS
+    // ==========================================
+    function generateCustomParticle(posX, posY, targetColor, bubbleFlag = false) {
+        return {
+            x: posX, y: posY,
+            moveX: bubbleFlag ? -108 : (Math.random() - 0.5) * 480, // Scaled for per-second movement
+            moveY: bubbleFlag ? -60 + (Math.random() * -30) : (Math.random() - 0.5) * 480,
+            remainingLife: 1.0, colorValue: targetColor, isBubble: bubbleFlag,
+            particleSize: bubbleFlag ? Math.random() * 3 + 2 : Math.random() * 5 + 3
+        };
+    }
+
+    function deployParticleExplosion(originX, originY, particleColor) {
+        for (let i = 0; i < 18; i++) {
+            arrayParticles.push(generateCustomParticle(originX, originY, particleColor, false));
+        }
+    }
+
+    function createEnvironmentalFloatingText(posX, posY, displayMessage, textColor) {
+        arrayFloatyText.push({ x: posX, y: posY, msg: displayMessage, color: textColor, lifespan: 1.0 });
+    }
+
+    function computeCollisionDistance(p1X, p1Y, rad1, p2X, p2Y, rad2) {
+        const dx = p1X - p2X; const dy = p1Y - p2Y;
+        return Math.sqrt(dx * dx + dy * dy) < (rad1 + rad2);
+    }
+
+    function assembleOceanLevel() {
+        ecoSubmersible.x = 200;
+        ecoSubmersible.y = displayHeight / 2;
+        worldCameraX = 0;
+        
+        reefHealthIndex = 0;
+        submarineHull = 100;
+        collectedTrashAmount = 0;
+        rescuedAnimalsCounter = 0;
+        sufferedMineHits = false;
+
+        arrayTrash = []; arrayAnimals = []; arrayHazards = [];
+        arrayParticles = []; arrayFloatyText = []; arraySceneryFlora = [];
+
+        for (let i = 0; i < 65; i++) {
+            arraySceneryFlora.push({
+                x: Math.random() * totalLevelWidth, y: displayHeight,
+                bladeHeight: 70 + Math.random() * 160,
+                colorTint: ['#004d40', '#00695c', '#1b5e20'][Math.floor(Math.random() * 3)],
+                swayFrequencyOffset: Math.random() * 200
+            });
+        }
+
+        for (let i = 0; i < targetTrashRequirement; i++) {
+            arrayTrash.push({ x: 700 + (i * 320) + (Math.random() * 120), y: 120 + Math.random() * (displayHeight - 240), hitRadius: 20, isCleaned: false });
+        }
+
+        const designKeys = ["turtle", "mantaray", "dolphin", "whale"];
+        for (let i = 0; i < 4; i++) {
+            arrayAnimals.push({
+                x: 1200 + (i * 1200) + (Math.random() * 300),
+                y: 150 + Math.random() * (displayHeight - 300),
+                hitRadius: 30,
+                isFree: false,
+                dbRefKey: designKeys[i]
+            });
+        }
+
+        for (let i = 0; i < 18; i++) {
+            arrayHazards.push({ x: 900 + (i * 280) + (Math.random() * 140), y: 100 + Math.random() * (displayHeight - 200), hitRadius: 22 });
+        }
+    }
+
+    // ==========================================
+    // 7. CORE LOGIC TICKER (DELTA POWERED)
+    // ==========================================
+    function updateFrameLogic(modifier) {
+        if (!isGameRunning) return;
+
+        ecoSubmersible.updateMovement(modifier);
+
+        // Plastic verification
+        arrayTrash.forEach(debris => {
+            if (!debris.isCleaned && computeCollisionDistance(ecoSubmersible.x, ecoSubmersible.y, 35, debris.x, debris.y, debris.hitRadius)) {
+                debris.isCleaned = true;
+                collectedTrashAmount++;
+                reefHealthIndex += 15;
+                playCollectSound();
+                deployParticleExplosion(debris.x, debris.y, '#ffffff');
+                createEnvironmentalFloatingText(debris.x, debris.y, "Debris Extracted", "#00e5ff");
+            }
+        });
+
+        // Animal rescue verification
+        arrayAnimals.forEach(animal => {
+            if (!animal.isFree && computeCollisionDistance(ecoSubmersible.x, ecoSubmersible.y, 35, animal.x, animal.y, animal.hitRadius)) {
+                animal.isFree = true;
+                rescuedAnimalsCounter++;
+                reefHealthIndex += 60;
+                
+                marineSpeciesDatabase[animal.dbRefKey].unlocked = true;
+                saveCurrentDataToBrowser();
+
+                playRescueSound();
+                deployParticleExplosion(animal.x, animal.y, '#00e676');
+                
+                const dataObj = marineSpeciesDatabase[animal.dbRefKey];
+                createEnvironmentalFloatingText(animal.x, animal.y - 40, `Saved ${dataObj.name}! Log Unlocked!`, "#64ffda");
+            }
+        });
+
+        // Hazard damage scaled safely with modifier
+        arrayHazards.forEach(hazard => {
+            if (computeCollisionDistance(ecoSubmersible.x, ecoSubmersible.y, 30, hazard.x, hazard.y, hazard.hitRadius)) {
+                submarineHull -= 36 * modifier; // Balances damage speed perfectly across all frames
+                reefHealthIndex -= 60 * modifier;
+                sufferedMineHits = true;
+                playHazardSound();
+                deployParticleExplosion(ecoSubmersible.x, ecoSubmersible.y, '#ff1744');
+                if (submarineHull <= 0) triggerMissionEnd(false);
+            }
+        });
+
+        // Particle speed scaled to modifier
+        arrayParticles.forEach(p => { 
+            p.x += p.moveX * modifier; 
+            p.y += p.moveY * modifier; 
+            p.remainingLife -= (p.isBubble ? 0.9 : 1.8) * modifier; 
+        });
+        arrayParticles = arrayParticles.filter(p => p.remainingLife > 0);
+
+        // Floaty text processing
+        arrayFloatyText.forEach(ft => { 
+            ft.y -= 90 * modifier; 
+            ft.lifespan -= 0.6 * modifier; 
+        });
+        arrayFloatyText = arrayFloatyText.filter(ft => ft.lifespan > 0);
+
+        // Map complete border validation
+        if (ecoSubmersible.x > totalLevelWidth - 250) {
+            if (collectedTrashAmount >= targetTrashRequirement) {
+                triggerMissionEnd(true);
+            } else {
+                ecoSubmersible.x -= 35; 
+                createEnvironmentalFloatingText(ecoSubmersible.x, ecoSubmersible.y - 50, "Extract all trash before leaving!", "#ff1744");
+            }
+        }
+
+        // Dashboard text refresh
+        document.getElementById('hud-reef-health').innerText = Math.max(0, Math.floor(reefHealthIndex));
+        document.getElementById('hud-trash-count').innerText = `${collectedTrashAmount} / ${targetTrashRequirement}`;
+        let hudHealth = document.getElementById('hud-hull-health');
+        hudHealth.innerText = Math.max(0, Math.floor(submarineHull)) + '%';
+        hudHealth.className = submarineHull > 35 ? 'eco-good' : 'eco-bad';
+    }
+
+    function renderGraphics() {
+        let gradient = ctx.createLinearGradient(0, 0, 0, displayHeight);
+        gradient.addColorStop(0, '#020f26'); gradient.addColorStop(1, '#05234d');
+        ctx.fillStyle = gradient; ctx.fillRect(0, 0, displayWidth, displayHeight);
+
+        arraySceneryFlora.forEach(flora => {
+            let sway = Math.sin((performance.now() / 1200) + flora.swayFrequencyOffset) * 25;
+            ctx.beginPath(); ctx.moveTo(flora.x - worldCameraX, flora.y);
+            ctx.quadraticCurveTo(flora.x - worldCameraX + sway, flora.y - (flora.bladeHeight/2), flora.x - worldCameraX, flora.y - flora.bladeHeight);
+            ctx.lineWidth = 18; ctx.strokeStyle = flora.colorTint; ctx.stroke();
+        });
+
+        ctx.fillStyle = 'rgba(0, 230, 118, 0.15)'; ctx.fillRect(totalLevelWidth - 250 - worldCameraX, 0, 250, displayHeight);
+        ctx.fillStyle = '#00e676'; ctx.font = '28px Arial'; ctx.fillText("Restored Zone", totalLevelWidth - 220 - worldCameraX, displayHeight / 2);
+
+        arrayHazards.forEach(hazard => {
+            ctx.save(); ctx.translate(hazard.x - worldCameraX, hazard.y);
+            ctx.fillStyle = '#ff1744'; ctx.beginPath(); ctx.arc(0, 0, hazard.hitRadius, 0, Math.PI * 2); ctx.fill();
+            for(let i=0; i<4; i++){ ctx.rotate(Math.PI / 2); ctx.fillRect(-5, -hazard.hitRadius - 10, 10, 20); }
+            ctx.restore();
+        });
+
+        arrayTrash.forEach(debris => {
+            if (debris.isCleaned) return;
+            ctx.save(); ctx.translate(debris.x - worldCameraX, debris.y);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'; ctx.fillRect(-12, -18, 24, 36); 
+            ctx.fillStyle = '#00e5ff'; ctx.fillRect(-8, -24, 16, 6); 
+            ctx.restore();
+        });
+
+        arrayAnimals.forEach(animal => {
+            ctx.save(); ctx.translate(animal.x - worldCameraX, animal.y);
+            
+            const specData = marineSpeciesDatabase[animal.dbRefKey];
+            ctx.fillStyle = specData.color;
+            ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.fill();
+            
+            ctx.fillStyle = '#ffffff'; ctx.font = '18px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(specData.icon, 0, 0);
+
+            if (!animal.isFree) {
+                ctx.strokeStyle = '#ff1744'; ctx.lineWidth = 3; ctx.strokeRect(-28, -28, 56, 56);
+                ctx.beginPath(); ctx.moveTo(-28, 0); ctx.lineTo(28, 0); ctx.moveTo(0, -28); ctx.lineTo(0, 28); ctx.stroke();
+            } else {
+                animal.y -= 30 * dt; // Animated smoothly relative to loop timing
+            }
+            ctx.restore();
+        });
+
+        arrayParticles.forEach(p => {
+            ctx.globalAlpha = Math.max(0, p.remainingLife); ctx.fillStyle = p.colorValue;
+            ctx.beginPath(); ctx.arc(p.x - worldCameraX, p.y, p.particleSize, 0, Math.PI * 2); ctx.fill();
+            ctx.globalAlpha = 1.0;
+        });
+
+        ecoSubmersible.renderSprite();
+
+        arrayFloatyText.forEach(ft => {
+            ctx.globalAlpha = Math.max(0, ft.lifespan); ctx.fillStyle = ft.color;
+            ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+            ctx.fillText(ft.msg, ft.x - worldCameraX, ft.y); ctx.globalAlpha = 1.0;
+        });
+    }
+
+    function gameLoop(currentTime) {
+        if (isGameRunning) {
+            // Compute time differential segment
+            dt = (currentTime - lastTime) / 1000;
+            
+            // Safety cap: prevents massive physics jumps if the browser tab lags
+            if (dt > 0.1) dt = 0.1; 
+            
+            lastTime = currentTime;
+
+            updateFrameLogic(dt);
+            renderGraphics();
+            requestAnimationFrame(gameLoop);
+        }
+    }
+
+    // ==========================================
+    // 8. INTERACTIVE MENU CONTROLLERS
+    // ==========================================
+    function showTutorial() {
+        initAudioEngine();
+        triggerAchievementUnlock('firstDive'); 
+        menuScreen.classList.add('hidden');
+        tutorialScreen.classList.remove('hidden');
+    }
+
+    function pressStartGame() {
+        initAudioEngine();
+        tutorialScreen.classList.add('hidden');
+        endScreen.classList.add('hidden');
+        liveHUD.classList.remove('hidden');
+        
+        assembleOceanLevel();
+        lastTime = performance.now(); // Sync clock just before launching execution loop
+        isGameRunning = true;
+        requestAnimationFrame(gameLoop);
+    }
+
+    function showGlossary() {
+        menuScreen.classList.add('hidden');
+        glossaryScreen.classList.remove('hidden');
+
+        const grid = document.getElementById('glossary-render-target');
+        grid.innerHTML = "";
+        
+        Object.keys(marineSpeciesDatabase).forEach(k => {
+            const item = marineSpeciesDatabase[k];
+            const card = document.createElement('div');
+            card.className = `glossary-card ${item.unlocked ? '' : 'locked'}`;
+            
+            card.innerHTML = `
+                <div class="g-avatar" style="background:${item.color};">${item.unlocked ? item.icon : '❓'}</div>
+                <div class="g-info">
+                    <h4>${item.unlocked ? item.name : 'Species Locked'}</h4>
+                    <p>${item.unlocked ? item.fact : 'Rescue this type of animal out in the operational trench zone to decode real-world ecological data logs.'}</p>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+
+        const bTarget = document.getElementById('ach-badge-target');
+        bTarget.innerHTML = "";
+        Object.keys(globalAchievementsDatabase).forEach(k => {
+            const a = globalAchievementsDatabase[k];
+            const span = document.createElement('div');
+            span.className = `ach-badge ${a.unlocked ? 'unlocked' : ''}`;
+            span.innerText = `${a.unlocked ? '🏆' : '🔒'} ${a.title}`;
+            span.title = a.desc;
+            bTarget.appendChild(span);
+        });
+    }
+
+    function hideGlossary() {
+        glossaryScreen.classList.add('hidden');
+        menuScreen.classList.remove('hidden');
+    }
+
+    function triggerMissionEnd(isVictory) {
+        isGameRunning = false;
+        liveHUD.classList.add('hidden');
+        endScreen.classList.remove('hidden');
+
+        const title = document.getElementById('end-title');
+        const stats = document.getElementById('end-statistics');
+
+        if (isVictory) {
+            playVictorySound();
+            title.innerText = "Ecosystem Stabilized!";
+            title.style.color = "#00e676";
+
+            if (collectedTrashAmount >= targetTrashRequirement) triggerAchievementUnlock('janitor');
+            if (rescuedAnimalsCounter >= 4) triggerAchievementUnlock('liberator');
+            if (!sufferedMineHits) triggerAchievementUnlock('deity');
+            
+            stats.innerHTML = `
+                <p>Mission Success! You extracted <span class="eco-good">${collectedTrashAmount} pieces of plastic waste</span> and liberated <span class="eco-good">${rescuedAnimalsCounter} animals</span>.</p>
+                <hr style="border: 1px solid rgba(255,255,255,0.1); margin: 20px 0;">
+                <p style="font-size: 1.1rem; color: #81d4fa;"><strong>Conservation Insight:</strong> Rescuing these virtual animals unlocks permanent data logs inside the primary menu. Study them to discover how community cleanup actions transform underwater environments worldwide.</p>
+            `;
+        } else {
+            playDefeatSound();
+            title.innerText = "Hull Integrity Failed";
+            title.style.color = "#ff1744";
+            
+            stats.innerHTML = `
+                <p>The submersible sustained critical structural damage from floating industrial mines.</p>
+                <p>Ecological restoration takes structural persistence. Run maintenance sweeps and deploy the sub again.</p>
+            `;
+        }
+    }
+
+    renderGraphics();
+</script>
+</body>
+</html>
